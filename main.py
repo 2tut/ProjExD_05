@@ -140,8 +140,10 @@ class Block(pygame.sprite.Sprite):
             Item("item.png", self.rect.centerx, self.rect.centery, self.paddle)
 
 
+# ドロップアイテムのクラス
 class Item(pygame.sprite.Sprite):
     def __init__(self, filename, x: int, y: int, paddle: Paddle):
+        # アイテムタイプのリスト
         ITEM_TYPES = [
             'increase_balls'
         ]
@@ -151,26 +153,28 @@ class Item(pygame.sprite.Sprite):
         self.rect = self.image.get_rect()
         self.rect.center = x, y
         self.paddle = paddle
-        self.dy = 1
-        self.update = self.move
+        self.dy = 1   # アイテム落下速度
 
         self.type = random.choice(ITEM_TYPES)
 
-    # 落下開始
-    def move(self):
+    def update(self):
         self.rect.centery += self.dy
 
+        # パドルと衝突していたら、アイテムを獲得して、sprtieを削除
         if self.rect.colliderect(self.paddle.rect) and self.dy > 0:
             self.gain()
             self.kill()
 
+        # パドルが画面の外に出たら、sprtieを削除
         if self.rect.centery > SCREEN.bottom:
             self.kill()
 
+    # アイテムを獲得すると呼ばれる関数
     def gain(self):
         if self.type == 'increase_balls':
             print('increase_balls')
 
+        # spriteを削除
         self.kill()
 
 
