@@ -4,8 +4,10 @@ import math
 import sys
 import pygame.mixer
 
+
 # 画面サイズ
 SCREEN = Rect(0, 0, 400, 400)
+
 
 # バドルのクラス
 class Paddle(pygame.sprite.Sprite):
@@ -19,6 +21,7 @@ class Paddle(pygame.sprite.Sprite):
     def update(self):
         self.rect.centerx = pygame.mouse.get_pos()[0]  # マウスのx座標をパドルのx座標に
         self.rect.clamp_ip(SCREEN)                     # ゲーム画面内のみで移動
+
 
 # ボールのクラス
 class Ball(pygame.sprite.Sprite):
@@ -113,6 +116,7 @@ class Ball(pygame.sprite.Sprite):
                 self.hit += 1               # 衝突回数
                 self.score.add_score(self.hit * 10)   # 衝突回数に応じてスコア加点
 
+
 # ブロックのクラス
 class Block(pygame.sprite.Sprite):
     def __init__(self, filename, x, y):
@@ -122,6 +126,7 @@ class Block(pygame.sprite.Sprite):
         # ブロックの左上座標
         self.rect.left = SCREEN.left + x * self.rect.width
         self.rect.top = SCREEN.top + y * self.rect.height
+
 
 # スコアのクラス
 class Score():
@@ -134,6 +139,7 @@ class Score():
         screen.blit(img, (self.x, self.y))
     def add_score(self, x):
         self.score += x
+
 
 def main():
     pygame.init()
@@ -193,6 +199,7 @@ def main():
             if event.type == KEYDOWN and event.key == K_ESCAPE:
                 pygame.quit()
                 sys.exit()
+
 
 if __name__ == "__main__":
     main()
