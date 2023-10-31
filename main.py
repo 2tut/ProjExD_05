@@ -141,7 +141,7 @@ class Block(pygame.sprite.Sprite):
 
 
 class Item(pygame.sprite.Sprite):
-    def __init__(self, filename, x, y, paddle):
+    def __init__(self, filename, x: int, y: int, paddle: Paddle):
         ITEM_TYPES = [
             'increase_balls'
         ]
