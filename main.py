@@ -23,7 +23,7 @@ class Paddle(pygame.sprite.Sprite):
 # ボールのクラス
 class Ball(pygame.sprite.Sprite):
     # コンストラクタ（初期化メソッド）
-    def __init__(self, filename, paddle, blocks, score, speed, angle_left, angle_right):
+    def __init__(self, filename, paddle, blocks, score, speed, angle_left, angle_right, balls: pygame.sprite.Group):
         pygame.sprite.Sprite.__init__(self, self.containers)
         self.image = pygame.image.load(filename).convert()
         self.rect = self.image.get_rect()
@@ -35,7 +35,16 @@ class Ball(pygame.sprite.Sprite):
         self.hit = 0  # 連続でブロックを壊した回数
         self.speed = speed # ボールの初期速度
         self.angle_left = angle_left # パドルの反射方向(左端:135度）
-        self.angle_right = angle_right # パドルの反射方向(右端:45度）
+        self.angle_right = angle_right # パドルの反射方向(右端:45度)
+        self.balls = balls
+
+    def increase(self : pygame.sprite.Sprite):
+        for ball in self.balls.sprites():
+            new_ball = Ball("ball.png", self.paddle, self.blocks, self.score, self.speed, self.angle_left, self.angle_right, self.balls)
+            new_ball.rect.center = ball.rect.center  # 新しいボールの位置を設定
+            new_ball.dx = 100  # 新しいボールの速度を設定
+            new_ball.dy = -ball.speed
+
 
     # ゲーム開始状態（マウスを左クリック時するとボール射出）
     def start(self):
@@ -151,9 +160,12 @@ def main():
     # 衝突判定用のスプライトグループ
     blocks = pygame.sprite.Group()
 
+    balls = pygame.sprite.Group()
+
+
     # スプライトグループに追加
     Paddle.containers = group
-    Ball.containers = group
+    Ball.containers = group, balls
     Block.containers = group, blocks
 
     # パドルの作成
@@ -169,7 +181,7 @@ def main():
 
     # ボールを作成
     Ball("ball.png",
-         paddle, blocks, score, 5, 135, 45)
+         paddle, blocks, score, 5, 135, 45, balls)
 
     clock = pygame.time.Clock()
 
@@ -193,6 +205,10 @@ def main():
             if event.type == KEYDOWN and event.key == K_ESCAPE:
                 pygame.quit()
                 sys.exit()
+            if event.type == KEYDOWN and event.key == K_LSHIFT:
+                for ball in balls.sprites():
+                    ball.increase()
 
 if __name__ == "__main__":
     main()
+
