@@ -36,6 +36,7 @@ class Ball(pygame.sprite.Sprite):
         self.speed = speed # ボールの初期速度
         self.angle_left = angle_left # パドルの反射方向(左端:135度）
         self.angle_right = angle_right # パドルの反射方向(右端:45度）
+        
 
     # ゲーム開始状態（マウスを左クリック時するとボール射出）
     def start(self):
@@ -81,9 +82,7 @@ class Ball(pygame.sprite.Sprite):
         # ボールを落とした場合
         if self.rect.top > SCREEN.bottom:
             self.update = self.start                    # ボールを初期状態に
-            self.gameover_sound.play()
-            self.hit = 0
-            self.score.add_score(-100)                  # スコア減点-100点
+            self.score.subtract_life()
 
         # ボールと衝突したブロックリストを取得（Groupが格納しているSprite中から、指定したSpriteと接触しているものを探索）
         blocks_collided = pygame.sprite.spritecollide(self, self.blocks, True)
@@ -125,15 +124,46 @@ class Block(pygame.sprite.Sprite):
 
 # スコアのクラス
 class Score():
-    def __init__(self, x, y):
+    def game_over(self, screen):
+        self.font = pygame.font.SysFont(True, 30)
+        self.color = (0, 0, 255)
+        self.value = 0
+        self.img = self.font.render("Game Over{}".format(self.value), True, self.color)
+        SCREEN.blit(self.img,100,100)
+
+    def update(self):
+        self.img = self.font.render("Game Over{}".format(self.value), True, self.color)
+
+    def __init__(self, x, y, initial_lives, screen):
         self.sysfont = pygame.font.SysFont(None, 20)
         self.score = 0
+        self.lives = initial_lives
         (self.x, self.y) = (x, y)
+        self.game_over = False
+        self.screen = screen
     def draw(self, screen):
-        img = self.sysfont.render("SCORE:"+str(self.score), True, (255,255,250))
+        img = self.sysfont.render(f"SCORE: {self.score} | LIVES: {self.lives}" , True, (255,255,250))
         screen.blit(img, (self.x, self.y))
     def add_score(self, x):
         self.score += x
+
+    def subtract_life(self):
+        self.lives -= 1
+        if self.lives <= 0:
+            self.gameover() # ゲームオーバーの状態に遷移
+
+    def gameover(self):
+        self.score -= 100
+        img = self.sysfont.render(f"Gameover", True, (255,255,250))
+        screen = pygame.display.get_surface
+        self.screen.blit(img, 200, 200)
+        pygame.display.update()
+        
+
+
+    
+
+    
 
 def main():
     pygame.init()
@@ -165,11 +195,10 @@ def main():
             Block("block.png", x, y)
 
     # スコアを画面(10, 10)に表示
-    score = Score(10, 10)
+    score = Score(10, 10, 2, screen)#命を2にする
 
     # ボールを作成
-    Ball("ball.png",
-         paddle, blocks, score, 5, 135, 45)
+    Ball("ball.png",paddle, blocks, score, 5, 135, 45)
 
     clock = pygame.time.Clock()
 
