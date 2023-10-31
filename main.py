@@ -122,7 +122,7 @@ class Ball(pygame.sprite.Sprite):
 
     #追加機能 ボールのサイズを変更
     def change_size(self):
-        self.image = pygame.transform.scale(self.image,(20, 20))
+        self.image = pygame.transform.scale(self.image,(20, 20)) #(20, 20)を(x, y)にしてする
 
 
 # ブロックのクラス
