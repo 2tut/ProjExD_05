@@ -3,6 +3,7 @@ from pygame.locals import *
 import math
 import sys
 import pygame.mixer
+import random
 
 
 # 画面サイズ
@@ -115,17 +116,62 @@ class Ball(pygame.sprite.Sprite):
                 self.block_sound.play()     # 効果音を鳴らす
                 self.hit += 1               # 衝突回数
                 self.score.add_score(self.hit * 10)   # 衝突回数に応じてスコア加点
+                block.crush()
 
 
 # ブロックのクラス
 class Block(pygame.sprite.Sprite):
-    def __init__(self, filename, x, y):
+    def __init__(self, filename, x, y, paddle):
         pygame.sprite.Sprite.__init__(self, self.containers)
         self.image = pygame.image.load(filename).convert()
         self.rect = self.image.get_rect()
         # ブロックの左上座標
         self.rect.left = SCREEN.left + x * self.rect.width
         self.rect.top = SCREEN.top + y * self.rect.height
+
+        self.paddle = paddle
+
+        # アイテムドロップ確率
+        self.drop_rate = 0.9
+
+    # 一定確率でアイテムをドロップする関数
+    def crush(self):
+        if random.random() < self.drop_rate:
+            Item("item.png", self.rect.centerx, self.rect.centery, self.paddle)
+
+
+class Item(pygame.sprite.Sprite):
+    def __init__(self, filename, x, y, paddle):
+        ITEM_TYPES = [
+            'increase_balls'
+        ]
+
+        pygame.sprite.Sprite.__init__(self, self.containers)
+        self.image = pygame.image.load(filename).convert()
+        self.rect = self.image.get_rect()
+        self.rect.center = x, y
+        self.paddle = paddle
+        self.dy = 1
+        self.update = self.move
+
+        self.type = random.choice(ITEM_TYPES)
+
+    # 落下開始
+    def move(self):
+        self.rect.centery += self.dy
+
+        if self.rect.colliderect(self.paddle.rect) and self.dy > 0:
+            self.gain()
+            self.kill()
+
+        if self.rect.centery > SCREEN.bottom:
+            self.kill()
+
+    def gain(self):
+        if self.type == 'increase_balls':
+            print('increase_balls')
+
+        self.kill()
 
 
 # スコアのクラス
@@ -161,6 +207,7 @@ def main():
     Paddle.containers = group
     Ball.containers = group
     Block.containers = group, blocks
+    Item.containers = group
 
     # パドルの作成
     paddle = Paddle("paddle.png")
@@ -168,7 +215,7 @@ def main():
     # ブロックの作成(14*10)
     for x in range(1, 15):
         for y in range(1, 11):
-            Block("block.png", x, y)
+            Block("block.png", x, y, paddle)
 
     # スコアを画面(10, 10)に表示
     score = Score(10, 10)
