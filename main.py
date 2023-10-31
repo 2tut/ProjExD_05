@@ -35,7 +35,7 @@ class Ball(pygame.sprite.Sprite):
         self.hit = 0  # 連続でブロックを壊した回数
         self.speed = speed # ボールの初期速度
         self.angle_left = angle_left # パドルの反射方向(左端:135度）
-        self.angle_right = angle_right # パドルの反射方向(右端:45度）
+        self.angle_right = angle_right # パドルの反射方向(右端:45度）      
 
     # ゲーム開始状態（マウスを左クリック時するとボール射出）
     def start(self):
@@ -112,6 +112,18 @@ class Ball(pygame.sprite.Sprite):
                 self.block_sound.play()     # 効果音を鳴らす
                 self.hit += 1               # 衝突回数
                 self.score.add_score(self.hit * 10)   # 衝突回数に応じてスコア加点
+            
+        # シフトキーを押しているかどうかをチェック
+        keys = pygame.key.get_pressed()
+        
+        if keys[K_LSHIFT] or keys[K_RSHIFT]:
+            # シフトキーが押されている場合、ボールのサイズを変更
+            self.change_size()
+
+    #追加機能 ボールのサイズを変更
+    def change_size(self):
+        self.image = pygame.transform.scale(self.image,(20, 20))
+
 
 # ブロックのクラス
 class Block(pygame.sprite.Sprite):
@@ -168,8 +180,7 @@ def main():
     score = Score(10, 10)
 
     # ボールを作成
-    Ball("ball.png",
-         paddle, blocks, score, 5, 135, 45)
+    Ball("ball.png",paddle, blocks, score, 5, 135, 45)
 
     clock = pygame.time.Clock()
 
@@ -193,6 +204,7 @@ def main():
             if event.type == KEYDOWN and event.key == K_ESCAPE:
                 pygame.quit()
                 sys.exit()
+
 
 if __name__ == "__main__":
     main()
