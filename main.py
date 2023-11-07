@@ -58,6 +58,8 @@ class Ball(pygame.sprite.Sprite):
             new_ball.update = new_ball.move
 
 
+        
+
     # ゲーム開始状態（マウスを左クリック時するとボール射出）
     def start(self):
         # ボールの初期位置(パドルの上)
@@ -106,11 +108,10 @@ class Ball(pygame.sprite.Sprite):
 
             else:                                           #ballsが自分のみの時、-100点減点し、gameover
                 self.update = self.start                    # ボールを初期状態に
+                self.score.subtract_life()
                 self.gameover_sound.play()
                 self.hit = 0
                 self.score.add_score(-100)                  # スコア減点-100点
-                
-
 
         # ボールと衝突したブロックリストを取得（Groupが格納しているSprite中から、指定したSpriteと接触しているものを探索）
         blocks_collided = pygame.sprite.spritecollide(self, self.blocks, True)
@@ -196,6 +197,64 @@ class Block(pygame.sprite.Sprite):
         if random.random() < self.drop_rate:
             Item("item.png", self.rect.centerx, self.rect.centery, self.paddle, self.balls)
 
+#敵キャラクターのクラス 
+class Enemy(pygame.sprite.Sprite):
+    def __init__(self, filename, x, y, paddle: Paddle):
+        pygame.sprite.Sprite.__init__(self, self.containers)
+        self.image = pygame.image.load(filename).convert()
+        self.image = pygame.transform.rotozoom(self.image,0,0.2)
+        self.rect = self.image.get_rect()
+        self.rect.topleft = (x, y)
+        self.speed = 4  # 敵キャラクターの移動速度
+        self.last_beam_time = 0  # 最後にビームを放った時間の初期値
+        self.paddle = paddle
+
+    def update(self,):
+        # 敵キャラクターを左右に移動
+        self.rect.x += self.speed
+        # 画面端に達したら反転
+        if self.rect.left < SCREEN.left or self.rect.right > SCREEN.right:
+            self.speed = -self.speed
+        
+        # 一定の間隔でビームを放つ
+        current_time = pygame.time.get_ticks()
+        if current_time - self.last_beam_time > 2500:
+            # ビームを放つ処理
+            beam = Beam("beam.png", self.rect.centerx, self.rect.bottom, self.paddle)
+            self.last_beam_time = current_time  # タイマーをリセット      
+
+#ビームのクラス
+class Beam(pygame.sprite.Sprite):
+    def __init__(self, filename, x, y, paddle: Paddle):
+        pygame.sprite.Sprite.__init__(self, self.containers)
+        self.image = pygame.image.load(filename).convert()
+        self.image = pygame.transform.rotozoom(self.image,0,0.1)
+        self.image_forward = pygame.transform.flip(self.image, True, False)
+        self.image_backward = pygame.transform.flip(self.image_forward, True, False)
+        self.rect = self.image.get_rect()
+        self.rect.topleft = (x, y)
+        self.speed = 5  # ビームの移動速度
+        self.paddle = paddle
+
+    def update(self):
+        # ビームを↓方向に移動
+        self.rect.y += self.speed
+
+        # 画面外に出たら自動で削除
+        if self.rect.bottom < 0:
+            self.kill()
+
+        if self.rect.colliderect(self.paddle.rect):
+            print("<**********************************>")
+            print("-----------Game Over-----------")
+            print("------モンスターにやられました")
+            print("<**********************************>")
+            pygame.quit()
+
+            sys.exit()
+        
+    
+
 
 # ドロップアイテムのクラス
 class Item(pygame.sprite.Sprite):
@@ -263,16 +322,34 @@ class Explosion(pygame.sprite.Sprite):
 
 # スコアのクラス
 class Score():
-    def __init__(self, x, y):
+    
+    def __init__(self, x, y, initial_lives, screen):
         self.sysfont = pygame.font.SysFont(None, 20)
         self.score = 0
+        self.lives = initial_lives
         (self.x, self.y) = (x, y)
+        self.game_over = False
+        self.screen = screen
     def draw(self, screen):
-        img = self.sysfont.render("SCORE:"+str(self.score), True, (255,255,250))
+        img = self.sysfont.render(f"SCORE: {self.score} | LIVES: {self.lives}" , True, (255,255,250))
         screen.blit(img, (self.x, self.y))
+
     def add_score(self, x):
         self.score += x
 
+    def subtract_life(self: pygame.sprite):
+        self.lives -= 1
+        if self.lives <= 0:
+            self.lives = 0
+            print("<**********************************>")
+            print("-----------Game Over-----------")
+            print("------→ライフが0になりました")
+            print("<**********************************>")
+            pygame.quit()
+            sys.exit()
+            
+
+    
 
 def main():
     pygame.init()
@@ -317,7 +394,7 @@ def main():
                 Block("block.png", x=x, y=y, hasBomb=False, paddle=paddle, balls=balls)
 
     # スコアを画面(10, 10)に表示
-    score = Score(10, 10)
+    score = Score(10, 10, 2, screen)#命を2にする
 
     # ボールを作成
     Ball("ball.png",
@@ -325,7 +402,27 @@ def main():
 
     clock = pygame.time.Clock()
 
+    # スプライトグループの初期化
+    enemies = pygame.sprite.Group()
+    beams = pygame.sprite.Group()
+
+    # スプライトグループに追加
+    Enemy.containers = group, enemies
+    Beam.containers = group, beams
+
+    # 敵キャラクターの初期化（適切な座標を指定してください）
+    Enemy("enemy.png", x, y, paddle)
+
+    
+    
+
+    
+
+    
+
+    
     while (1):
+        pygame.display.update()
         clock.tick(60)      # フレームレート(60fps)
         screen.fill((0,20,0))
         # 全てのスプライトグループを更新
@@ -334,8 +431,11 @@ def main():
         group.draw(screen)
         # スコアを描画
         score.draw(screen)
-        # 画面更新
+        
+        pygame.display.flip()
+
         pygame.display.update()
+        clock = pygame.time.Clock()
 
         # キーイベント（終了）
         for event in pygame.event.get():
