@@ -112,6 +112,8 @@ class Ball(pygame.sprite.Sprite):
         blocks_collided = pygame.sprite.spritecollide(self, self.blocks, True)
 
         if blocks_collided:  # 衝突ブロックがある場合
+            blocks_explosioned = []
+
             for block in blocks_collided:
                 if not self.is_bullet:
                     self.bound_on_block(block)
@@ -121,12 +123,12 @@ class Ball(pygame.sprite.Sprite):
                     block.rect.centery -= 10
                     block.rect.height += 17
                     block.rect.width += 26
-                    pygame.sprite.spritecollide(block, self.blocks, True)
+                    bs = pygame.sprite.spritecollide(block, self.blocks, True)
+                    blocks_explosioned += bs
                     Explosion("explosion.gif", block.rect.centerx-35, block.rect.centery-40)
 
-                self.block_sound.play()     # 効果音を鳴らす
-                self.hit += 1               # 衝突回数
-                self.score.add_score(self.hit * 10)   # 衝突回数に応じてスコア加点
+            for block in blocks_collided + blocks_explosioned:
+                self.block_crush()
                 block.crush()
 
         if self.is_bullet:
@@ -169,6 +171,11 @@ class Ball(pygame.sprite.Sprite):
         if block.rect.top < oldrect.top and block.rect.bottom < oldrect.bottom:
             self.rect.top = block.rect.bottom
             self.dy = -self.dy
+
+    def block_crush(self):
+        self.block_sound.play()     # 効果音を鳴らす
+        self.hit += 1               # 衝突回数
+        self.score.add_score(self.hit * 10)   # 衝突回数に応じてスコア加点
 
 
 # ブロックのクラス
