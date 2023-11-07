@@ -1,11 +1,10 @@
-from typing import Any
 import pygame
 from pygame.locals import *
 import math
 import sys
 import pygame.mixer
-from pygame.sprite import AbstractGroup
 import random
+
 
 # 画面サイズ
 SCREEN = Rect(0, 0, 400, 400)
@@ -47,7 +46,6 @@ class Ball(pygame.sprite.Sprite):
         self.balls = balls
         self.bomb = bomb
 
-
     #新しいボールの設定
     def increase(self:pygame.sprite.Sprite):
         for ball in self.balls.sprites():
@@ -56,9 +54,6 @@ class Ball(pygame.sprite.Sprite):
             new_ball.dx = self.speed  # 新しいボールの速度を設定
             new_ball.dy = -ball.speed
             new_ball.update = new_ball.move
-
-
-        
 
     # ゲーム開始状態（マウスを左クリック時するとボール射出）
     def start(self):
@@ -139,20 +134,20 @@ class Ball(pygame.sprite.Sprite):
 
             if self.bullet_life_time <= 0:
                 self.is_bullet = False
-    
+
         # シフトキーを押しているかどうかをチェック
         keys = pygame.key.get_pressed()
-    
+
         if keys[K_LSHIFT]:
             # シフトキーが押されている場合、ボールのサイズを変更
             self.change_size(15, 15)
         elif keys[K_RSHIFT]:
             self.change_size(20, 20)
-            
+
     #追加機能 ボールのサイズを変更
     def change_size(self, x, y):
         self.image = pygame.transform.scale(self.image,(x, y))
-        
+
     def bound_on_block(self, block):
         oldrect = self.rect
         # ボールが左からブロックへ衝突した場合
@@ -174,6 +169,7 @@ class Ball(pygame.sprite.Sprite):
         if block.rect.top < oldrect.top and block.rect.bottom < oldrect.bottom:
             self.rect.top = block.rect.bottom
             self.dy = -self.dy
+
 
 # ブロックのクラス
 class Block(pygame.sprite.Sprite):
@@ -197,7 +193,8 @@ class Block(pygame.sprite.Sprite):
         if random.random() < self.drop_rate:
             Item("item.png", self.rect.centerx, self.rect.centery, self.paddle, self.balls)
 
-#敵キャラクターのクラス 
+
+#敵キャラクターのクラス
 class Enemy(pygame.sprite.Sprite):
     def __init__(self, filename, x, y, paddle: Paddle):
         pygame.sprite.Sprite.__init__(self, self.containers)
@@ -215,13 +212,14 @@ class Enemy(pygame.sprite.Sprite):
         # 画面端に達したら反転
         if self.rect.left < SCREEN.left or self.rect.right > SCREEN.right:
             self.speed = -self.speed
-        
+
         # 一定の間隔でビームを放つ
         current_time = pygame.time.get_ticks()
         if current_time - self.last_beam_time > 2500:
             # ビームを放つ処理
             beam = Beam("beam.png", self.rect.centerx, self.rect.bottom, self.paddle)
-            self.last_beam_time = current_time  # タイマーをリセット      
+            self.last_beam_time = current_time  # タイマーをリセット
+
 
 #ビームのクラス
 class Beam(pygame.sprite.Sprite):
@@ -252,8 +250,6 @@ class Beam(pygame.sprite.Sprite):
             pygame.quit()
 
             sys.exit()
-        
-    
 
 
 # ドロップアイテムのクラス
@@ -322,7 +318,7 @@ class Explosion(pygame.sprite.Sprite):
 
 # スコアのクラス
 class Score():
-    
+
     def __init__(self, x, y, initial_lives, screen):
         self.sysfont = pygame.font.SysFont(None, 20)
         self.score = 0
@@ -347,9 +343,7 @@ class Score():
             print("<**********************************>")
             pygame.quit()
             sys.exit()
-            
 
-    
 
 def main():
     pygame.init()
@@ -375,7 +369,7 @@ def main():
     Paddle.containers = group,
     Ball.containers = group, balls
     Block.containers = group, blocks
-    Explosion.containers = group,bomb    
+    Explosion.containers = group,bomb
     Item.containers = group
 
     # パドルの作成
@@ -397,8 +391,7 @@ def main():
     score = Score(10, 10, 2, screen)#命を2にする
 
     # ボールを作成
-    Ball("ball.png",
-         paddle, blocks, score, 5, 135, 45, balls, bomb)
+    Ball("ball.png", paddle, blocks, score, 5, 135, 45, balls, bomb)
 
     clock = pygame.time.Clock()
 
@@ -413,15 +406,7 @@ def main():
     # 敵キャラクターの初期化（適切な座標を指定してください）
     Enemy("enemy.png", x, y, paddle)
 
-    
-    
-
-    
-
-    
-
-    
-    while (1):
+    while True:
         pygame.display.update()
         clock.tick(60)      # フレームレート(60fps)
         screen.fill((0,20,0))
@@ -431,8 +416,6 @@ def main():
         group.draw(screen)
         # スコアを描画
         score.draw(screen)
-        
-        pygame.display.flip()
 
         pygame.display.update()
         clock = pygame.time.Clock()
@@ -449,6 +432,7 @@ def main():
             if event.type == KEYDOWN and event.key == K_LSHIFT:
                 for ball in balls.sprites():
                     ball.increase()
+
 
 if __name__ == "__main__":
     main()
