@@ -40,6 +40,8 @@ class Ball(pygame.sprite.Sprite):
         self.speed = speed # ボールの初期速度
         self.angle_left = angle_left # パドルの反射方向(左端:135度）
         self.angle_right = angle_right # パドルの反射方向(右端:45度）
+        self.is_bullet = False
+        self.bullet_life_time = 0
 
     # ゲーム開始状態（マウスを左クリック時するとボール射出）
     def start(self):
@@ -92,36 +94,46 @@ class Ball(pygame.sprite.Sprite):
         # ボールと衝突したブロックリストを取得（Groupが格納しているSprite中から、指定したSpriteと接触しているものを探索）
         blocks_collided = pygame.sprite.spritecollide(self, self.blocks, True)
         if blocks_collided:  # 衝突ブロックがある場合
-            oldrect = self.rect
             for block in blocks_collided:
-                # ボールが左からブロックへ衝突した場合
-                if oldrect.left < block.rect.left and oldrect.right < block.rect.right:
-                    self.rect.right = block.rect.left
-                    self.dx = -self.dx
+                if not self.is_bullet:
+                    self.bound_on_block(block)
 
-                # ボールが右からブロックへ衝突した場合
-                if block.rect.left < oldrect.left and block.rect.right < oldrect.right:
-                    self.rect.left = block.rect.right
-                    self.dx = -self.dx
-
-                # ボールが上からブロックへ衝突した場合
-                if oldrect.top < block.rect.top and oldrect.bottom < block.rect.bottom:
-                    self.rect.bottom = block.rect.top
-                    self.dy = -self.dy
-
-                # ボールが下からブロックへ衝突した場合
-                if block.rect.top < oldrect.top and block.rect.bottom < oldrect.bottom:
-                    self.rect.top = block.rect.bottom
-                    self.dy = -self.dy
                 self.block_sound.play()     # 効果音を鳴らす
                 self.hit += 1               # 衝突回数
                 self.score.add_score(self.hit * 10)   # 衝突回数に応じてスコア加点
                 block.crush()
 
+        if self.is_bullet:
+            self.bullet_life_time -= 1
+
+            if self.bullet_life_time <= 0:
+                self.is_bullet = False
+
+    def bound_on_block(self, block):
+        oldrect = self.rect
+        # ボールが左からブロックへ衝突した場合
+        if oldrect.left < block.rect.left and oldrect.right < block.rect.right:
+            self.rect.right = block.rect.left
+            self.dx = -self.dx
+
+        # ボールが右からブロックへ衝突した場合
+        if block.rect.left < oldrect.left and block.rect.right < oldrect.right:
+            self.rect.left = block.rect.right
+            self.dx = -self.dx
+
+        # ボールが上からブロックへ衝突した場合
+        if oldrect.top < block.rect.top and oldrect.bottom < block.rect.bottom:
+            self.rect.bottom = block.rect.top
+            self.dy = -self.dy
+
+        # ボールが下からブロックへ衝突した場合
+        if block.rect.top < oldrect.top and block.rect.bottom < oldrect.bottom:
+            self.rect.top = block.rect.bottom
+            self.dy = -self.dy
 
 # ブロックのクラス
 class Block(pygame.sprite.Sprite):
-    def __init__(self, filename, x, y, paddle):
+    def __init__(self, filename, x, y, paddle, balls):
         pygame.sprite.Sprite.__init__(self, self.containers)
         self.image = pygame.image.load(filename).convert()
         self.rect = self.image.get_rect()
@@ -130,6 +142,7 @@ class Block(pygame.sprite.Sprite):
         self.rect.top = SCREEN.top + y * self.rect.height
 
         self.paddle = paddle
+        self.balls = balls
 
         # アイテムドロップ確率
         self.drop_rate = 0.9
@@ -137,15 +150,16 @@ class Block(pygame.sprite.Sprite):
     # 一定確率でアイテムをドロップする関数
     def crush(self):
         if random.random() < self.drop_rate:
-            Item("item.png", self.rect.centerx, self.rect.centery, self.paddle)
+            Item("item.png", self.rect.centerx, self.rect.centery, self.paddle, self.balls)
 
 
 # ドロップアイテムのクラス
 class Item(pygame.sprite.Sprite):
-    def __init__(self, filename, x: int, y: int, paddle: Paddle):
+    def __init__(self, filename, x: int, y: int, paddle: Paddle, balls: pygame.sprite.Group):
         # アイテムタイプのリスト
         ITEM_TYPES = [
-            "increase_balls"
+            "increase_balls",
+            "bullet_ball"
         ]
 
         pygame.sprite.Sprite.__init__(self, self.containers)
@@ -153,6 +167,7 @@ class Item(pygame.sprite.Sprite):
         self.rect = self.image.get_rect()
         self.rect.center = x, y
         self.paddle = paddle
+        self.balls = balls
         self.dy = 1   # アイテム落下速度
 
         self.type = random.choice(ITEM_TYPES)
@@ -173,6 +188,10 @@ class Item(pygame.sprite.Sprite):
     def gain(self):
         if self.type == "increase_balls":
             print("increase_balls")
+        elif self.type == "bullet_ball":
+            for ball in self.balls:
+                ball.is_bullet = True
+                ball.bullet_life_time = 200
 
         # spriteを削除
         self.kill()
@@ -206,10 +225,11 @@ def main():
 
     # 衝突判定用のスプライトグループ
     blocks = pygame.sprite.Group()
+    balls = pygame.sprite.Group()
 
     # スプライトグループに追加
     Paddle.containers = group
-    Ball.containers = group
+    Ball.containers = group, balls
     Block.containers = group, blocks
     Item.containers = group
 
@@ -219,7 +239,7 @@ def main():
     # ブロックの作成(14*10)
     for x in range(1, 15):
         for y in range(1, 11):
-            Block("block.png", x, y, paddle)
+            Block("block.png", x, y, paddle, balls)
 
     # スコアを画面(10, 10)に表示
     score = Score(10, 10)
