@@ -145,7 +145,7 @@ class Item(pygame.sprite.Sprite):
     def __init__(self, filename, x: int, y: int, paddle: Paddle):
         # アイテムタイプのリスト
         ITEM_TYPES = [
-            'increase_balls'
+            "increase_balls"
         ]
 
         pygame.sprite.Sprite.__init__(self, self.containers)
@@ -171,8 +171,8 @@ class Item(pygame.sprite.Sprite):
 
     # アイテムを獲得すると呼ばれる関数
     def gain(self):
-        if self.type == 'increase_balls':
-            print('increase_balls')
+        if self.type == "increase_balls":
+            print("increase_balls")
 
         # spriteを削除
         self.kill()
