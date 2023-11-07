@@ -108,7 +108,20 @@ class Ball(pygame.sprite.Sprite):
 
             if self.bullet_life_time <= 0:
                 self.is_bullet = False
-
+    
+        # シフトキーを押しているかどうかをチェック
+        keys = pygame.key.get_pressed()
+    
+        if keys[K_LSHIFT]:
+            # シフトキーが押されている場合、ボールのサイズを変更
+            self.change_size(15, 15)
+        elif keys[K_RSHIFT]:
+            self.change_size(20, 20)
+            
+    #追加機能 ボールのサイズを変更
+    def change_size(self, x, y):
+        self.image = pygame.transform.scale(self.image,(x, y))
+        
     def bound_on_block(self, block):
         oldrect = self.rect
         # ボールが左からブロックへ衝突した場合
@@ -245,8 +258,7 @@ def main():
     score = Score(10, 10)
 
     # ボールを作成
-    Ball("ball.png",
-         paddle, blocks, score, 5, 135, 45)
+    Ball("ball.png",paddle, blocks, score, 5, 135, 45)
 
     clock = pygame.time.Clock()
 
@@ -270,6 +282,7 @@ def main():
             if event.type == KEYDOWN and event.key == K_ESCAPE:
                 pygame.quit()
                 sys.exit()
+
 
 
 if __name__ == "__main__":
