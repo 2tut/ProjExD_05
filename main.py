@@ -311,7 +311,7 @@ def main():
     # ブロックの作成(14*10)
     for x in range(1, 15):
         for y in range(1, 11):
-            if x == bomb_x and bomb_y == j:
+            if x == bomb_x and y == bomb_y:
                 Block("bomb.png", x=x, y=y, hasBomb=True, paddle=paddle, balls=balls)
             else:
                 Block("block.png", x=x, y=y, hasBomb=False, paddle=paddle, balls=balls)
