@@ -47,7 +47,7 @@ class Ball(pygame.sprite.Sprite):
         self.bomb = bomb
 
     #新しいボールの設定
-    def increase(self:pygame.sprite.Sprite):
+    def increase(self):
         for ball in self.balls.sprites():
             new_ball = Ball("ball.png", self.paddle, self.blocks, self.score, self.speed, self.angle_left, self.angle_right, self.balls, self.bomb)
             new_ball.rect.center = self.rect.center  # 新しいボールの位置を設定
@@ -437,7 +437,14 @@ def main():
                 pygame.quit()
                 sys.exit()
 
+        # ブロックがすべて壊されたとき、終了
+        alive_blocks = [b for b in blocks if b.alive]
+        if len(alive_blocks) == 0:
+            print("GAME CLEAR!!!")
+            pygame.time.delay(3000)
+            pygame.quit()
+            sys.exit()
+
 
 if __name__ == "__main__":
     main()
-
