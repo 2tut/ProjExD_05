@@ -351,8 +351,7 @@ def main():
     # 敵キャラクターの初期化（適切な座標を指定してください）
     Enemy("enemy.png", x, y, paddle)
 
-    # ビームの初期化（適切な座標を指定してください）
-    # beams = Beam("beam.png", x, y)
+    
     
 
     
@@ -361,7 +360,6 @@ def main():
 
     
     while (1):
-        pygame.display.flip()
         pygame.display.update()
         clock.tick(60)      # フレームレート(60fps)
         screen.fill((0,20,0))
@@ -371,22 +369,7 @@ def main():
         group.draw(screen)
         # スコアを描画
         score.draw(screen)
-        # 画面更新
-        # 描画用のスプライトグループ（敵キャラクターとビームを含む）
-        #enemies = pygame.sprite.Group()
-        #beams = pygame.sprite.Group()
-
-        # スプライトグループに追加
-        #Enemy.containers = group, enemies
-        #Beam.containers = group, beams
-
-        # メインのゲームループ内で以下のように敵キャラクターとビームを更新と描画します：
-
-        # 敵キャラクターとビームの更新と描画
-        #enemies.update()
-        #enemies.draw(screen)
-        #beams.update()
-        #beams.draw(screen)
+        
         pygame.display.flip()
 
         pygame.display.update()
