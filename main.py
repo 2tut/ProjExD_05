@@ -10,9 +10,6 @@ import random
 # 画面サイズ
 SCREEN = Rect(0, 0, 400, 400)
 
-i = random.randint(1,15)
-j = random.randint(1,11)
-
 
 # バドルのクラス
 class Paddle(pygame.sprite.Sprite):
@@ -307,10 +304,14 @@ def main():
     # パドルの作成
     paddle = Paddle("paddle.png")
 
+    #爆弾ブロックの座標
+    bomb_x = random.randint(1,15)
+    bomb_y = random.randint(1,11)
+
     # ブロックの作成(14*10)
     for x in range(1, 15):
         for y in range(1, 11):
-            if x == i and y == j:
+            if x == bomb_x and bomb_y == j:
                 Block("bomb.png", x=x, y=y, hasBomb=True, paddle=paddle, balls=balls)
             else:
                 Block("block.png", x=x, y=y, hasBomb=False, paddle=paddle, balls=balls)
