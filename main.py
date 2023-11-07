@@ -1,10 +1,11 @@
+from typing import Any
 import pygame
 from pygame.locals import *
 import math
 import sys
 import pygame.mixer
+from pygame.sprite import AbstractGroup
 import random
-
 
 # 画面サイズ
 SCREEN = Rect(0, 0, 400, 400)
@@ -27,7 +28,7 @@ class Paddle(pygame.sprite.Sprite):
 # ボールのクラス
 class Ball(pygame.sprite.Sprite):
     # コンストラクタ（初期化メソッド）
-    def __init__(self, filename, paddle, blocks, score, speed, angle_left, angle_right):
+    def __init__(self, filename, paddle, blocks, score, speed, angle_left, angle_right, balls, bomb: pygame.sprite.Group):
         pygame.sprite.Sprite.__init__(self, self.containers)
         self.image = pygame.image.load(filename).convert()
         self.rect = self.image.get_rect()
@@ -42,6 +43,20 @@ class Ball(pygame.sprite.Sprite):
         self.angle_right = angle_right # パドルの反射方向(右端:45度）
         self.is_bullet = False
         self.bullet_life_time = 0
+        self.angle_right = angle_right # パドルの反射方向(右端:45度)
+        self.balls = balls
+        self.bomb = bomb
+
+
+    #新しいボールの設定
+    def increase(self:pygame.sprite.Sprite):
+        for ball in self.balls.sprites():
+            new_ball = Ball("ball.png", self.paddle, self.blocks, self.score, self.speed, self.angle_left, self.angle_right, self.balls, self.bomb)
+            new_ball.rect.center = self.rect.center  # 新しいボールの位置を設定
+            new_ball.dx = self.speed  # 新しいボールの速度を設定
+            new_ball.dy = -ball.speed
+            new_ball.update = new_ball.move
+
 
         
 
@@ -88,15 +103,31 @@ class Ball(pygame.sprite.Sprite):
 
         # ボールを落とした場合
         if self.rect.top > SCREEN.bottom:
-            self.update = self.start                    # ボールを初期状態に
-            self.score.subtract_life()
+            if len(self.balls) > 1:                         #ballsが自分含め複数画面に存在する場合
+                self.kill()
+
+            else:                                           #ballsが自分のみの時、-100点減点し、gameover
+                self.update = self.start                    # ボールを初期状態に
+                self.score.subtract_life()
+                self.gameover_sound.play()
+                self.hit = 0
+                self.score.add_score(-100)                  # スコア減点-100点
 
         # ボールと衝突したブロックリストを取得（Groupが格納しているSprite中から、指定したSpriteと接触しているものを探索）
         blocks_collided = pygame.sprite.spritecollide(self, self.blocks, True)
+
         if blocks_collided:  # 衝突ブロックがある場合
             for block in blocks_collided:
                 if not self.is_bullet:
                     self.bound_on_block(block)
+
+                if block.hasBomb:
+                    block.rect.centerx -= 20
+                    block.rect.centery -= 10
+                    block.rect.height += 17
+                    block.rect.width += 26
+                    pygame.sprite.spritecollide(block, self.blocks, True)
+                    Explosion("explosion.gif", block.rect.centerx-35, block.rect.centery-40)
 
                 self.block_sound.play()     # 効果音を鳴らす
                 self.hit += 1               # 衝突回数
@@ -146,13 +177,14 @@ class Ball(pygame.sprite.Sprite):
 
 # ブロックのクラス
 class Block(pygame.sprite.Sprite):
-    def __init__(self, filename, x, y, paddle, balls):
+    def __init__(self, filename, x, y , hasBomb : bool, paddle, balls):
         pygame.sprite.Sprite.__init__(self, self.containers)
         self.image = pygame.image.load(filename).convert()
         self.rect = self.image.get_rect()
         # ブロックの左上座標
         self.rect.left = SCREEN.left + x * self.rect.width
         self.rect.top = SCREEN.top + y * self.rect.height
+        self.hasBomb = hasBomb
 
         self.paddle = paddle
         self.balls = balls
@@ -268,6 +300,26 @@ class Item(pygame.sprite.Sprite):
         self.kill()
 
 
+class Explosion(pygame.sprite.Sprite):
+    def __init__(self, filename, x, y):
+        super().__init__()
+        pygame.sprite.Sprite.__init__(self, self.containers)
+        self.image = pygame.image.load(filename).convert()
+        self.rect = self.image.get_rect()
+        self.rect.topleft = (x, y)
+
+        self.clock = pygame.time.Clock()
+        self.clock.tick()
+        self.lifespan = 1000  # 1秒（1000ミリ秒）の寿命を設定
+        self.spawn_time = 0
+
+    def update(self):
+        self.clock.tick()
+        self.spawn_time += self.clock.get_time()
+        if self.spawn_time > self.lifespan:
+            self.kill()
+
+
 # スコアのクラス
 class Score():
     
@@ -314,29 +366,39 @@ def main():
 
     # 衝突判定用のスプライトグループ
     blocks = pygame.sprite.Group()
+
     balls = pygame.sprite.Group()
 
+    bomb = pygame.sprite.Group()
+
     # スプライトグループに追加
-    Paddle.containers = group
+    Paddle.containers = group,
     Ball.containers = group, balls
     Block.containers = group, blocks
+    Explosion.containers = group,bomb    
     Item.containers = group
 
     # パドルの作成
     paddle = Paddle("paddle.png")
 
-    
+    #爆弾ブロックの座標
+    bomb_x = random.randint(1,15)
+    bomb_y = random.randint(1,11)
 
     # ブロックの作成(14*10)
     for x in range(1, 15):
         for y in range(1, 11):
-            Block("block.png", x, y, paddle, balls)
+            if x == bomb_x and y == bomb_y:
+                Block("bomb.png", x=x, y=y, hasBomb=True, paddle=paddle, balls=balls)
+            else:
+                Block("block.png", x=x, y=y, hasBomb=False, paddle=paddle, balls=balls)
 
     # スコアを画面(10, 10)に表示
     score = Score(10, 10, 2, screen)#命を2にする
 
     # ボールを作成
-    Ball("ball.png",paddle, blocks, score, 5, 135, 45)
+    Ball("ball.png",
+         paddle, blocks, score, 5, 135, 45, balls, bomb)
 
     clock = pygame.time.Clock()
 
@@ -383,9 +445,10 @@ def main():
             if event.type == KEYDOWN and event.key == K_ESCAPE:
                 pygame.quit()
                 sys.exit()
-                
-
-
+            #仮で左シフトキーを押した時ボール増加
+            if event.type == KEYDOWN and event.key == K_LSHIFT:
+                for ball in balls.sprites():
+                    ball.increase()
 
 if __name__ == "__main__":
     main()
