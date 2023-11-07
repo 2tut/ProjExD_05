@@ -184,7 +184,7 @@ class Block(pygame.sprite.Sprite):
         self.balls = balls
 
         # アイテムドロップ確率
-        self.drop_rate = 0.9
+        self.drop_rate = 0.2
 
     # 一定確率でアイテムをドロップする関数
     def crush(self):
