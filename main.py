@@ -137,15 +137,6 @@ class Ball(pygame.sprite.Sprite):
             if self.bullet_life_time <= 0:
                 self.is_bullet = False
 
-        # シフトキーを押しているかどうかをチェック
-        keys = pygame.key.get_pressed()
-
-        if keys[K_LSHIFT]:
-            # シフトキーが押されている場合、ボールのサイズを変更
-            self.change_size(15, 15)
-        elif keys[K_RSHIFT]:
-            self.change_size(20, 20)
-
     #追加機能 ボールのサイズを変更
     def change_size(self, x, y):
         self.image = pygame.transform.scale(self.image,(x, y))
@@ -261,11 +252,12 @@ class Beam(pygame.sprite.Sprite):
 
 # ドロップアイテムのクラス
 class Item(pygame.sprite.Sprite):
-    def __init__(self, filename, x: int, y: int, paddle: Paddle, balls: pygame.sprite.Group):
+    def __init__(self, filename, x: int, y: int, paddle: Paddle, balls: [Ball]):
         # アイテムタイプのリスト
         ITEM_TYPES = [
-            "increase_balls",
-            "bullet_ball"
+            "bullet_ball",
+            "multiple_balls",
+            "change_ball_size",
         ]
 
         pygame.sprite.Sprite.__init__(self, self.containers)
@@ -292,12 +284,19 @@ class Item(pygame.sprite.Sprite):
 
     # アイテムを獲得すると呼ばれる関数
     def gain(self):
-        if self.type == "increase_balls":
-            print("increase_balls")
-        elif self.type == "bullet_ball":
+        if self.type == "bullet_ball":
+            print("弾丸ボール")
             for ball in self.balls:
                 ball.is_bullet = True
                 ball.bullet_life_time = 200
+        elif self.type == "multiple_balls":
+            print("ボールの数2倍")
+            for ball in self.balls:
+                ball.increase()
+        elif self.type == "change_ball_size":
+            print("ボールサイズ変更")
+            for ball in self.balls:
+                ball.change_size(20, 20)
 
         # spriteを削除
         self.kill()
@@ -325,7 +324,6 @@ class Explosion(pygame.sprite.Sprite):
 
 # スコアのクラス
 class Score():
-
     def __init__(self, x, y, initial_lives, screen):
         self.sysfont = pygame.font.SysFont(None, 20)
         self.score = 0
@@ -435,10 +433,6 @@ def main():
             if event.type == KEYDOWN and event.key == K_ESCAPE:
                 pygame.quit()
                 sys.exit()
-            #仮で左シフトキーを押した時ボール増加
-            if event.type == KEYDOWN and event.key == K_LSHIFT:
-                for ball in balls.sprites():
-                    ball.increase()
 
 
 if __name__ == "__main__":
