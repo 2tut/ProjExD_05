@@ -292,7 +292,10 @@ class Item(pygame.sprite.Sprite):
         elif self.type == "multiple_balls":
             print("ボールの数2倍")
             for ball in self.balls:
-                ball.increase()
+                alive_balls = [b for b in self.balls if b.alive]
+
+                if len(alive_balls) <= 8:
+                    ball.increase()
         elif self.type == "change_ball_size":
             print("ボールサイズ変更")
             for ball in self.balls:
