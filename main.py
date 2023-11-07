@@ -116,13 +116,14 @@ class Ball(pygame.sprite.Sprite):
         # シフトキーを押しているかどうかをチェック
         keys = pygame.key.get_pressed()
         
-        if keys[K_LSHIFT] or keys[K_RSHIFT]:
+        if keys[K_LSHIFT]:
             # シフトキーが押されている場合、ボールのサイズを変更
-            self.change_size()
-
+            self.change_size(15, 15)
+        elif keys[K_RSHIFT]:
+            self.change_size(20, 20)
     #追加機能 ボールのサイズを変更
-    def change_size(self):
-        self.image = pygame.transform.scale(self.image,(20, 20)) #(20, 20)を(x, y)にしてする
+    def change_size(self, x, y):
+        self.image = pygame.transform.scale(self.image,(x, y))
 
 
 # ブロックのクラス
