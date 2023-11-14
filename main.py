@@ -286,24 +286,47 @@ class Item(pygame.sprite.Sprite):
     # アイテムを獲得すると呼ばれる関数
     def gain(self):
         if self.type == "bullet_ball":
-            print("弾丸ボール")
+            Popup("弾丸ボール")
             for ball in self.balls:
                 ball.is_bullet = True
                 ball.bullet_life_time = 200
         elif self.type == "multiple_balls":
-            print("ボールの数2倍")
+            Popup("ボールの数2倍")
             for ball in self.balls:
                 alive_balls = [b for b in self.balls if b.alive]
 
                 if len(alive_balls) <= 8:
                     ball.increase()
         elif self.type == "change_ball_size":
-            print("ボールサイズ変更")
+            Popup("ボールサイズ変更")
             for ball in self.balls:
                 ball.change_size(20, 20)
 
         # spriteを削除
         self.kill()
+
+
+class Popup(pygame.sprite.Sprite):
+    def __init__(self, display_string):
+        pygame.sprite.Sprite.__init__(self, self.containers)
+        self.sysfont = pygame.font.SysFont("yugothicregular", 20)
+        self.image = self.sysfont.render(display_string, True, (255,255,255))
+        self.rect = self.image.get_rect()
+        self.rect.centerx = SCREEN.width / 2
+        self.rect.centery = 40
+        self.clock = pygame.time.Clock()
+        self.clock.tick()
+        self.spawn_time = 0
+        self.lifespan = 3000  # 3秒（3000ミリ秒）の寿命を設定
+
+    def update(self):
+        self.clock.tick()
+        self.rect.centery += 2
+        alpha = self.image.get_alpha()
+        self.image.set_alpha(alpha - 2)
+        self.spawn_time += self.clock.get_time()
+        if self.spawn_time > self.lifespan:
+            self.kill()
 
 
 class Explosion(pygame.sprite.Sprite):
@@ -369,10 +392,10 @@ def main():
 
     # 衝突判定用のスプライトグループ
     blocks = pygame.sprite.Group()
-
     balls = pygame.sprite.Group()
-
     bomb = pygame.sprite.Group()
+    enemies = pygame.sprite.Group()
+    beams = pygame.sprite.Group()
 
     # スプライトグループに追加
     Paddle.containers = group,
@@ -380,6 +403,9 @@ def main():
     Block.containers = group, blocks
     Explosion.containers = group,bomb
     Item.containers = group
+    Popup.containers = group
+    Enemy.containers = group, enemies
+    Beam.containers = group, beams
 
     # パドルの作成
     paddle = Paddle("paddle.png")
@@ -403,14 +429,6 @@ def main():
     Ball("ball.png", paddle, blocks, score, 5, 135, 45, balls, bomb)
 
     clock = pygame.time.Clock()
-
-    # スプライトグループの初期化
-    enemies = pygame.sprite.Group()
-    beams = pygame.sprite.Group()
-
-    # スプライトグループに追加
-    Enemy.containers = group, enemies
-    Beam.containers = group, beams
 
     # 敵キャラクターの初期化（適切な座標を指定してください）
     Enemy("enemy.png", x, y, paddle)
