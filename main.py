@@ -198,6 +198,7 @@ class Enemy(pygame.sprite.Sprite):
         pygame.sprite.Sprite.__init__(self, self.containers)
         self.image = pygame.image.load(filename).convert()
         self.image = pygame.transform.rotozoom(self.image,0,0.2)
+        self.image.set_colorkey((0, 0, 0))
         self.rect = self.image.get_rect()
         self.rect.topleft = (x, y)
         self.speed = 4  # 敵キャラクターの移動速度
